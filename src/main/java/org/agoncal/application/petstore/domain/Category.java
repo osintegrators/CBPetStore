@@ -1,14 +1,25 @@
 package org.agoncal.application.petstore.domain;
 
-import org.agoncal.application.petstore.constraint.NotEmpty;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.agoncal.application.petstore.constraint.NotEmpty;
+import org.codehaus.jackson.annotate.JsonBackReference;
 
 /**
  * @author Antonio Goncalves
@@ -43,6 +54,7 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     @OrderBy("name ASC")
     @XmlTransient
+    @JsonBackReference
     private List<Product> products;
 
     // ======================================

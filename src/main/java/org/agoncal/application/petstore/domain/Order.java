@@ -1,9 +1,30 @@
 package org.agoncal.application.petstore.domain;
 
-import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Date;
 import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonManagedReference;
 
 /**
  * @author Antonio Goncalves
@@ -26,20 +47,25 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private String id;
+    private String type = "order";
     @Column(name = "order_date", updatable = false)
     @Temporal(TemporalType.DATE)
     private Date orderDate;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "customer_fk", nullable = false)
+    @JsonManagedReference
     private Customer customer;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "t_order_order_line",
             joinColumns = {@JoinColumn(name = "order_fk")},
             inverseJoinColumns = {@JoinColumn(name = "order_line_fk")})
+    @JsonManagedReference
     private List<OrderLine> orderLines;
     @Embedded
+    @JsonManagedReference
     private Address deliveryAddress;
     @Embedded
+    @JsonManagedReference
     private CreditCard creditCard = new CreditCard();
 
     // ======================================
@@ -74,6 +100,7 @@ public class Order {
     // =              Public Methods        =
     // ======================================
 
+    @JsonIgnore
     public Float getTotal() {
         if (orderLines == null || orderLines.isEmpty())
             return 0f;
@@ -100,9 +127,21 @@ public class Order {
     	this.id = id;
     }
 
-    public Date getOrderDate() {
+    public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public Date getOrderDate() {
         return orderDate;
     }
+
+	public void setOrderDate(Date date) {
+		this.orderDate = date;
+	}
 
     public Customer getCustomer() {
         return customer;

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -11,7 +12,6 @@ import java.util.concurrent.ExecutionException;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 
 import net.spy.memcached.internal.OperationFuture;
 
@@ -22,9 +22,17 @@ import org.agoncal.application.petstore.domain.Order;
 import org.agoncal.application.petstore.domain.OrderLine;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.agoncal.application.petstore.util.Loggable;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.couchbase.client.CouchbaseClient;
-import com.google.gson.Gson;
+import com.couchbase.client.protocol.views.Query;
+import com.couchbase.client.protocol.views.View;
+import com.couchbase.client.protocol.views.ViewResponse;
+import com.couchbase.client.protocol.views.ViewRow;
+import com.fasterxml.jackson.core.JsonParser;
 
 /**
  * @author Antonio Goncalves
@@ -44,7 +52,7 @@ public class OrderService implements Serializable {
     private EntityManager em;
 
     public static CouchbaseClient client = null;
-    public static Gson gson = null;
+    public static ObjectMapper mapper = null;
     public static final int EXP_TIME = 0;
     
     // ======================================
@@ -66,7 +74,7 @@ public class OrderService implements Serializable {
           System.err.println("IOException connecting to Couchbase: " + e.getMessage());
         }
 
-        gson = new Gson();
+        mapper = new ObjectMapper();
     }
 
     @Override
@@ -95,29 +103,63 @@ public class OrderService implements Serializable {
         //em.persist(order);
         order.setId(customer.getFirstname());
 
-        // Do an asynchronous set
-        client.set(order.getId(), EXP_TIME, gson.toJson(order));
+        try {
+			client.set(order.getId(), EXP_TIME, mapper.writeValueAsString(order));
+		} catch (JsonGenerationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (JsonMappingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
         return order;
     }
 
-    public Order findOrder(Long orderId) {
+    public Order findOrder(String orderId) {
         if (orderId == null)
             throw new ValidationException("Invalid order id");
 
-        return em.find(Order.class, orderId);
+        //return em.find(Order.class, orderId);
+        return mapper.convertValue(client.get(orderId), Order.class);
     }
 
     public List<Order> findAllOrders() {
-    	//List<Order> = new ArrayList<Order>();
-        TypedQuery<Order> typedQuery = em.createNamedQuery(Order.FIND_ALL, Order.class);
-        return typedQuery.getResultList();
+        //TypedQuery<Order> typedQuery = em.createNamedQuery(Order.FIND_ALL, Order.class);
+        //return typedQuery.getResultList();
+
+    	List<Order> orders = new ArrayList<Order>();
+
+    	View view = client.getView("orders", "orders");
+
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	while(itr.hasNext()) {
+    	  ViewRow row = itr.next();
+
+    	  Order order = mapper.convertValue(row.getDocument(), Order.class);
+    	  orders.add(order);
+    	}
+
+    	return orders;
     }
 
     public void removeOrder(Order order) {
         if (order == null)
             throw new ValidationException("Order object is null");
 
-        em.remove(em.merge(order));
+        //em.remove(em.merge(order));
+        client.delete(order.getId());
     }
 }

@@ -1,6 +1,15 @@
 package org.agoncal.application.petstore.domain;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonManagedReference;
 
 /**
  * @author Antonio Goncalves
@@ -22,6 +31,7 @@ public class OrderLine {
     private Integer quantity;
     @OneToOne
     @JoinColumn(name = "item_fk", nullable = false)
+    @JsonManagedReference
     private Item item;
 
     // ======================================
@@ -39,7 +49,7 @@ public class OrderLine {
     // ======================================
     // =              Public Methods        =
     // ======================================
-
+    @JsonIgnore
     public Float getSubTotal() {
         return item.getUnitCost() * quantity;
     }

@@ -7,6 +7,8 @@ import javax.persistence.Enumerated;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.codehaus.jackson.annotate.JsonManagedReference;
+
 /**
  * @author Antonio Goncalves
  *         http://www.antoniogoncalves.org
@@ -27,6 +29,7 @@ public class CreditCard {
     @Column(name = "credit_card_type")
     @NotNull
     @Enumerated(EnumType.STRING)
+    @JsonManagedReference
     private CreditCardType creditCardType;
     @Column(name = "credit_card_expiry_date", length = 5)
     @NotNull

@@ -5,12 +5,22 @@ import org.agoncal.application.petstore.domain.Item;
 import org.agoncal.application.petstore.domain.Product;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.agoncal.application.petstore.util.Loggable;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
+import com.couchbase.client.CouchbaseClient;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -30,9 +40,36 @@ public class CatalogService implements Serializable {
     @Inject
     private EntityManager em;
 
+    public static CouchbaseClient client = null;
+    public static ObjectMapper mapper = null;
+    public static final int EXP_TIME = 0;
+
     // ======================================
     // =              Public Methods        =
     // ======================================
+
+    public CatalogService() {
+        // Set the URIs and get a client
+        List<URI> uris = new LinkedList<URI>();
+
+        // Connect to localhost or to the appropriate URI(s)
+        uris.add(URI.create("http://localhost:8091/pools"));
+
+        
+        try {
+          // Use the "default" bucket with no password
+          client = new CouchbaseClient(uris, "petstore", "");
+        } catch (IOException e) {
+          System.err.println("IOException connecting to Couchbase: " + e.getMessage());
+        }
+
+        mapper = new ObjectMapper();
+    }
+
+    @Override
+    public void finalize() {
+    	client.shutdown();
+    }
 
     public Category findCategory(Long categoryId) {
         if (categoryId == null)
@@ -59,7 +96,21 @@ public class CatalogService implements Serializable {
         if (category == null)
             throw new ValidationException("Category object is null");
 
-        em.persist(category);
+        //em.persist(category);
+
+        try {
+			client.set(category.getName(), EXP_TIME, mapper.writeValueAsString(category));
+		} catch (JsonGenerationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (JsonMappingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
         return category;
     }
 
