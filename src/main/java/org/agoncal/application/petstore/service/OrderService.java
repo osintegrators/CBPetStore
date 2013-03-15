@@ -6,11 +6,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+
+import net.spy.memcached.internal.OperationFuture;
 
 import org.agoncal.application.petstore.domain.CartItem;
 import org.agoncal.application.petstore.domain.CreditCard;
@@ -58,7 +61,7 @@ public class OrderService implements Serializable {
         
         try {
           // Use the "default" bucket with no password
-          client = new CouchbaseClient(uris, "default", "");
+          client = new CouchbaseClient(uris, "petstore", "");
         } catch (IOException e) {
           System.err.println("IOException connecting to Couchbase: " + e.getMessage());
         }
@@ -90,8 +93,10 @@ public class OrderService implements Serializable {
 
         // Persists the object to the database
         //em.persist(order);
+        order.setId(customer.getFirstname());
 
-        client.set(order.getCustomer().getFirstname(), EXP_TIME, gson.toJson(order));
+        // Do an asynchronous set
+        client.set(order.getId(), EXP_TIME, gson.toJson(order));
 
         return order;
     }
@@ -104,6 +109,7 @@ public class OrderService implements Serializable {
     }
 
     public List<Order> findAllOrders() {
+    	//List<Order> = new ArrayList<Order>();
         TypedQuery<Order> typedQuery = em.createNamedQuery(Order.FIND_ALL, Order.class);
         return typedQuery.getResultList();
     }

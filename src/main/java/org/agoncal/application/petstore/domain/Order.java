@@ -25,7 +25,7 @@ public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
     @Column(name = "order_date", updatable = false)
     @Temporal(TemporalType.DATE)
     private Date orderDate;
@@ -92,8 +92,12 @@ public class Order {
     // =         Getters & setters          =
     // ======================================
 
-    public Long getId() {
+    public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+    	this.id = id;
     }
 
     public Date getOrderDate() {
