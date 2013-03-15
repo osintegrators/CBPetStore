@@ -12,6 +12,12 @@
     <container qualifier="glassfish-embedded" default="true">
     </container>
 
+	<container qualifier="jboss">
+		<configuration>
+			<property name="jbossHome">/opt/jboss</property>
+		</configuration>
+	</container>
+
     <!--<container qualifier="openejb" default="true">-->
     <!--<configuration>-->
     <!--<property name="properties">-->

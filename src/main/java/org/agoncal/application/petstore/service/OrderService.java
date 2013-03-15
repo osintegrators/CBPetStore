@@ -1,16 +1,27 @@
 package org.agoncal.application.petstore.service;
 
-import org.agoncal.application.petstore.domain.*;
-import org.agoncal.application.petstore.exception.ValidationException;
-import org.agoncal.application.petstore.util.Loggable;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.agoncal.application.petstore.domain.CartItem;
+import org.agoncal.application.petstore.domain.CreditCard;
+import org.agoncal.application.petstore.domain.Customer;
+import org.agoncal.application.petstore.domain.Order;
+import org.agoncal.application.petstore.domain.OrderLine;
+import org.agoncal.application.petstore.exception.ValidationException;
+import org.agoncal.application.petstore.util.Loggable;
+
+import com.couchbase.client.CouchbaseClient;
+import com.google.gson.Gson;
 
 /**
  * @author Antonio Goncalves
@@ -29,9 +40,36 @@ public class OrderService implements Serializable {
     @Inject
     private EntityManager em;
 
+    public static CouchbaseClient client = null;
+    public static Gson gson = null;
+    public static final int EXP_TIME = 0;
+    
     // ======================================
     // =              Public Methods        =
     // ======================================
+
+    public OrderService() {
+        // Set the URIs and get a client
+        List<URI> uris = new LinkedList<URI>();
+
+        // Connect to localhost or to the appropriate URI(s)
+        uris.add(URI.create("http://localhost:8091/pools"));
+
+        
+        try {
+          // Use the "default" bucket with no password
+          client = new CouchbaseClient(uris, "default", "");
+        } catch (IOException e) {
+          System.err.println("IOException connecting to Couchbase: " + e.getMessage());
+        }
+
+        gson = new Gson();
+    }
+
+    @Override
+    public void finalize() {
+    	client.shutdown();
+    }
 
     public Order createOrder(final Customer customer, final CreditCard creditCard, final List<CartItem> cartItems) {
 
@@ -40,7 +78,7 @@ public class OrderService implements Serializable {
             throw new ValidationException("Shopping cart is empty"); // TODO exception bean validation
 
         // Creating the order
-        Order order = new Order(em.merge(customer), creditCard, customer.getHomeAddress());
+        Order order = new Order(customer, creditCard, customer.getHomeAddress());
 
         // From the shopping cart we create the order lines
         List<OrderLine> orderLines = new ArrayList<OrderLine>();
@@ -51,7 +89,9 @@ public class OrderService implements Serializable {
         order.setOrderLines(orderLines);
 
         // Persists the object to the database
-        em.persist(order);
+        //em.persist(order);
+
+        client.set(order.getCustomer().getFirstname(), EXP_TIME, gson.toJson(order));
 
         return order;
     }
