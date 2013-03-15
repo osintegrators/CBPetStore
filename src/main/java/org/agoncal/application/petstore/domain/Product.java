@@ -44,8 +44,9 @@ public class Product {
     // ======================================
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.AUTO)
+    private String id;
+    private String type = "product";
     @Column(nullable = false, length = 30)
     @NotNull
     @Size(min = 1, max = 30)
@@ -55,12 +56,12 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_fk", nullable = false)
     @XmlTransient
-    @JsonManagedReference
+    @JsonBackReference
     private Category category;
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     @OrderBy("name ASC")
     @XmlTransient
-    @JsonBackReference
+    @JsonManagedReference
     private List<Item> items;
 
     // ======================================
@@ -87,11 +88,23 @@ public class Product {
     // =         Getters & setters          =
     // ======================================
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public String getName() {
+    public void setId(String id) {
+    	this.id = id;
+    }
+
+    public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getName() {
         return name;
     }
 

@@ -133,7 +133,7 @@ public class OrderService implements Serializable {
 
     	List<Order> orders = new ArrayList<Order>();
 
-    	View view = client.getView("orders", "orders");
+    	View view = client.getView("orders", "all");
 
     	// Create a new View Query
     	Query query = new Query();

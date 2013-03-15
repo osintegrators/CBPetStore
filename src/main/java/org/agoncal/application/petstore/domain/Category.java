@@ -19,7 +19,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.agoncal.application.petstore.constraint.NotEmpty;
-import org.codehaus.jackson.annotate.JsonBackReference;
+import org.codehaus.jackson.annotate.JsonManagedReference;
 
 /**
  * @author Antonio Goncalves
@@ -42,8 +42,9 @@ public class Category {
     // ======================================
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.AUTO)
+    private String id;
+    private String type = "category";
     @Column(nullable = false, length = 30)
     @NotNull
     @Size(min = 1, max = 30)
@@ -54,7 +55,7 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     @OrderBy("name ASC")
     @XmlTransient
-    @JsonBackReference
+    @JsonManagedReference
     private List<Product> products;
 
     // ======================================
@@ -80,11 +81,23 @@ public class Category {
     // =         Getters & setters          =
     // ======================================
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public String getName() {
+    public void setId(String id) {
+    	this.id = id;
+    }
+
+    public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getName() {
         return name;
     }
 

@@ -2,6 +2,7 @@ package org.agoncal.application.petstore.service;
 
 import org.agoncal.application.petstore.domain.Category;
 import org.agoncal.application.petstore.domain.Item;
+import org.agoncal.application.petstore.domain.Order;
 import org.agoncal.application.petstore.domain.Product;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.agoncal.application.petstore.util.Loggable;
@@ -11,6 +12,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.couchbase.client.CouchbaseClient;
+import com.couchbase.client.protocol.views.Query;
+import com.couchbase.client.protocol.views.View;
+import com.couchbase.client.protocol.views.ViewResponse;
+import com.couchbase.client.protocol.views.ViewRow;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -20,6 +25,8 @@ import javax.persistence.TypedQuery;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -88,8 +95,30 @@ public class CatalogService implements Serializable {
     }
 
     public List<Category> findAllCategories() {
-        TypedQuery<Category> typedQuery = em.createNamedQuery(Category.FIND_ALL, Category.class);
-        return typedQuery.getResultList();
+        //TypedQuery<Category> typedQuery = em.createNamedQuery(Category.FIND_ALL, Category.class);
+        //return typedQuery.getResultList();
+
+    	List<Category> categories = new ArrayList<Category>();
+
+    	View view = client.getView("categories", "all");
+
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	while(itr.hasNext()) {
+    	  ViewRow row = itr.next();
+
+    	  Category category = mapper.convertValue(row.getDocument(), Category.class);
+    	  categories.add(category);
+    	}
+    	return categories;
     }
 
     public Category createCategory(Category category) {
@@ -98,6 +127,7 @@ public class CatalogService implements Serializable {
 
         //em.persist(category);
 
+        category.setId(category.getType() + "_" + category.getName());
         try {
 			client.set(category.getName(), EXP_TIME, mapper.writeValueAsString(category));
 		} catch (JsonGenerationException e1) {
@@ -164,10 +194,25 @@ public class CatalogService implements Serializable {
         if (product == null)
             throw new ValidationException("Product object is null");
 
-        if (product.getCategory() != null && product.getCategory().getId() == null)
-            em.persist(product.getCategory());
+        //if (product.getCategory() != null && product.getCategory().getId() == null)
+        //    em.persist(product.getCategory());
 
-        em.persist(product);
+        //em.persist(product);
+
+        product.setId(product.getType() + "_" + product.getName());
+        try {
+			client.set(product.getName(), EXP_TIME, mapper.writeValueAsString(product));
+		} catch (JsonGenerationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (JsonMappingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
         return product;
     }
 
@@ -226,13 +271,28 @@ public class CatalogService implements Serializable {
         if (item == null)
             throw new ValidationException("Item object is null");
 
-        if (item.getProduct() != null && item.getProduct().getId() == null) {
-            em.persist(item.getProduct());
-            if (item.getProduct().getCategory() != null && item.getProduct().getCategory().getId() == null)
-                em.persist(item.getProduct().getCategory());
-        }
+        //if (item.getProduct() != null && item.getProduct().getId() == null) {
+        //    em.persist(item.getProduct());
+        //    if (item.getProduct().getCategory() != null && item.getProduct().getCategory().getId() == null)
+        //        em.persist(item.getProduct().getCategory());
+        //}
 
-        em.persist(item);
+        //em.persist(item);
+
+        item.setId(item.getType() + "_" + item.getName());
+        try {
+			client.set(item.getName(), EXP_TIME, mapper.writeValueAsString(item));
+		} catch (JsonGenerationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (JsonMappingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
         return item;
     }
 
