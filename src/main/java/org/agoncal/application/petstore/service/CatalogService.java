@@ -1,27 +1,5 @@
 package org.agoncal.application.petstore.service;
 
-import org.agoncal.application.petstore.domain.Category;
-import org.agoncal.application.petstore.domain.Item;
-import org.agoncal.application.petstore.domain.Order;
-import org.agoncal.application.petstore.domain.Product;
-import org.agoncal.application.petstore.exception.ValidationException;
-import org.agoncal.application.petstore.util.Loggable;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
-import com.couchbase.client.CouchbaseClient;
-import com.couchbase.client.protocol.views.Query;
-import com.couchbase.client.protocol.views.View;
-import com.couchbase.client.protocol.views.ViewResponse;
-import com.couchbase.client.protocol.views.ViewRow;
-
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
@@ -29,6 +7,26 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+
+import org.agoncal.application.petstore.domain.Category;
+import org.agoncal.application.petstore.domain.Item;
+import org.agoncal.application.petstore.domain.Product;
+import org.agoncal.application.petstore.exception.ValidationException;
+import org.agoncal.application.petstore.util.Loggable;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.couchbase.client.CouchbaseClient;
+import com.couchbase.client.protocol.views.Query;
+import com.couchbase.client.protocol.views.View;
+import com.couchbase.client.protocol.views.ViewResponse;
+import com.couchbase.client.protocol.views.ViewRow;
 
 /**
  * @author Antonio Goncalves
@@ -78,20 +76,21 @@ public class CatalogService implements Serializable {
     	client.shutdown();
     }
 
-    public Category findCategory(Long categoryId) {
+    /*public Category findCategory(Long categoryId) {
         if (categoryId == null)
             throw new ValidationException("Invalid category id");
 
         return em.find(Category.class, categoryId);
-    }
+    }*/
 
     public Category findCategory(String categoryName) {
         if (categoryName == null)
             throw new ValidationException("Invalid category name");
 
-        TypedQuery<Category> typedQuery = em.createNamedQuery(Category.FIND_BY_NAME, Category.class);
-        typedQuery.setParameter("pname", categoryName);
-        return typedQuery.getSingleResult();
+        //TypedQuery<Category> typedQuery = em.createNamedQuery(Category.FIND_BY_NAME, Category.class);
+        //typedQuery.setParameter("pname", categoryName);
+        //return typedQuery.getSingleResult();
+        return mapper.convertValue(client.get(categoryName), Category.class);
     }
 
     public List<Category> findAllCategories() {
@@ -155,10 +154,11 @@ public class CatalogService implements Serializable {
         if (category == null)
             throw new ValidationException("Category object is null");
 
-        em.remove(em.merge(category));
+        //em.remove(em.merge(category));
+        client.delete(category.getId());
     }
 
-    public void removeCategory(Long categoryId) {
+    public void removeCategory(String categoryId) {
         if (categoryId == null)
             throw new ValidationException("Invalid category id");
 
@@ -174,20 +174,43 @@ public class CatalogService implements Serializable {
         return typedQuery.getResultList();
     }
 
-    public Product findProduct(Long productId) {
+    public Product findProduct(String productId) {
         if (productId == null)
             throw new ValidationException("Invalid product id");
 
-        Product product = em.find(Product.class, productId);
-        if (product != null) {
-            product.getItems(); // TODO check lazy loading
-        }
-        return product;
+        //Product product = em.find(Product.class, productId);
+        //if (product != null) {
+        //    product.getItems(); // TODO check lazy loading
+        //}
+        //return product;
+        return mapper.convertValue(client.get(productId), Product.class);
     }
 
     public List<Product> findAllProducts() {
-        TypedQuery<Product> typedQuery = em.createNamedQuery(Product.FIND_ALL, Product.class);
-        return typedQuery.getResultList();
+        //TypedQuery<Product> typedQuery = em.createNamedQuery(Product.FIND_ALL, Product.class);
+        //return typedQuery.getResultList();
+
+    	List<Product> products = new ArrayList<Product>();
+
+    	View view = client.getView("products", "all");
+
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	while(itr.hasNext()) {
+    	  ViewRow row = itr.next();
+
+    	  Product product = mapper.convertValue(row.getDocument(), Product.class);
+    	  products.add(product);
+    	}
+    	return products;
     }
 
     public Product createProduct(Product product) {
@@ -227,10 +250,11 @@ public class CatalogService implements Serializable {
         if (product == null)
             throw new ValidationException("Product object is null");
 
-        em.remove(em.merge(product));
+        //em.remove(em.merge(product));
+        client.delete(product.getId());
     }
 
-    public void removeProduct(Long productId) {
+    public void removeProduct(String productId) {
         if (productId == null)
             throw new ValidationException("Invalid product id");
 
@@ -246,11 +270,12 @@ public class CatalogService implements Serializable {
         return typedQuery.getResultList();
     }
 
-    public Item findItem(final Long itemId) {
+    public Item findItem(final String itemId) {
         if (itemId == null)
             throw new ValidationException("Invalid item id");
 
-        return em.find(Item.class, itemId);
+        return mapper.convertValue(client.get(itemId), Item.class);
+        //return em.find(Item.class, itemId);
     }
 
     public List<Item> searchItems(String keyword) {
@@ -263,8 +288,29 @@ public class CatalogService implements Serializable {
     }
 
     public List<Item> findAllItems() {
-        TypedQuery<Item> typedQuery = em.createNamedQuery(Item.FIND_ALL, Item.class);
-        return typedQuery.getResultList();
+        //TypedQuery<Item> typedQuery = em.createNamedQuery(Item.FIND_ALL, Item.class);
+        //return typedQuery.getResultList();
+    	List<Item> items = new ArrayList<Item>();
+
+    	View view = client.getView("items", "all");
+
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	while(itr.hasNext()) {
+    	  ViewRow row = itr.next();
+
+    	  Item item = mapper.convertValue(row.getDocument(), Item.class);
+    	  items.add(item);
+    	}
+    	return items;
     }
 
     public Item createItem(Item item) {
@@ -307,10 +353,11 @@ public class CatalogService implements Serializable {
         if (item == null)
             throw new ValidationException("Item object is null");
 
-        em.remove(em.merge(item));
+        client.delete(item.getId());
+        //em.remove(em.merge(item));
     }
 
-    public void removeItem(Long itemId) {
+    public void removeItem(String itemId) {
         if (itemId == null)
             throw new ValidationException("itemId is null");
 
