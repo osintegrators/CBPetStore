@@ -54,7 +54,7 @@ public class CatalogRestService implements Serializable {
     @Path("/category/{id}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Category findCategory(@PathParam("id") Long categoryId) {
-        return catalogService.findCategory(categoryId);
+        return catalogService.findCategory(String.valueOf(categoryId));
     }
 
     @POST
@@ -78,7 +78,7 @@ public class CatalogRestService implements Serializable {
     @DELETE
     @Path("/category/{id}")
     public Response removeCategory(@PathParam("id") Long categoryId) {
-        catalogService.removeCategory(categoryId);
+        catalogService.removeCategory(String.valueOf(categoryId));
         return Response.noContent().build();
     }
 
@@ -93,7 +93,7 @@ public class CatalogRestService implements Serializable {
     @Path("/product/{id}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Product findProduct(@PathParam("id") Long productId) {
-        return catalogService.findProduct(productId);
+        return catalogService.findProduct(String.valueOf(productId));
     }
 
     @POST
@@ -117,7 +117,7 @@ public class CatalogRestService implements Serializable {
     @DELETE
     @Path("/product/{id}")
     public Response removeProduct(@PathParam("id") Long productId) {
-        catalogService.removeProduct(productId);
+        catalogService.removeProduct(String.valueOf(productId));
         return Response.noContent().build();
     }
 
@@ -132,7 +132,7 @@ public class CatalogRestService implements Serializable {
     @Path("/item/{id}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Item findItem(@PathParam("id") Long itemId) {
-        return catalogService.findItem(itemId);
+        return catalogService.findItem(String.valueOf(itemId));
     }
 
     @POST
@@ -156,7 +156,7 @@ public class CatalogRestService implements Serializable {
     @DELETE
     @Path("/item/{id}")
     public Response removeItem(@PathParam("id") Long itemId) {
-        catalogService.removeItem(itemId);
+        catalogService.removeItem(String.valueOf(itemId));
         return Response.noContent().build();
     }
 

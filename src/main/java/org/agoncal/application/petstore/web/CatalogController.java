@@ -51,13 +51,13 @@ public class CatalogController extends Controller implements Serializable {
     }
 
     public String doFindItems() {
-        product = catalogService.findProduct(productId);
+        product = catalogService.findProduct(String.valueOf(productId));
         items = catalogService.findItems(productId);
         return "showitems.faces";
     }
 
     public String doFindItem() {
-        item = catalogService.findItem(itemId);
+        item = catalogService.findItem(String.valueOf(itemId));
         return "showitem.faces";
     }
 

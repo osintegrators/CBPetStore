@@ -49,7 +49,7 @@ public class ShoppingCartController extends Controller implements Serializable {
     // ======================================
 
     public String addItemToCart() {
-        Item item = catalogBean.findItem(getParamId("itemId"));
+        Item item = catalogBean.findItem(getParam("itemId"));
 
         // Start conversation
         if (conversation.isTransient()) {
@@ -73,7 +73,7 @@ public class ShoppingCartController extends Controller implements Serializable {
     }
 
     public String removeItemFromCart() {
-        Item item = catalogBean.findItem(getParamId("itemId"));
+        Item item = catalogBean.findItem(getParam("itemId"));
 
         for (CartItem cartItem : cartItems) {
             if (cartItem.getItem().equals(item)) {

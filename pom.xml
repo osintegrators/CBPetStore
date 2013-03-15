@@ -86,7 +86,7 @@
     </dependencies>
 
     <profiles>
-    
+
         <profile>
             <id>jacoco</id>
             <properties>
@@ -109,6 +109,7 @@
                                 <id>test</id>
                                 <phase>initialize</phase>
                                 <goals>
+                                    <!--suppress MavenModelInspection -->
                                     <goal>prepare-agent</goal>
                                 </goals>
                                 <configuration>
@@ -120,6 +121,7 @@
                                 <id>integration-test</id>
                                 <phase>pre-integration-test</phase>
                                 <goals>
+                                    <!--suppress MavenModelInspection -->
                                     <goal>prepare-agent</goal>
                                 </goals>
                                 <configuration>
@@ -132,7 +134,7 @@
                 </plugins>
             </build>
         </profile>
-    
+
         <profile>
             <id>glassfish3</id>
             <activation>
@@ -250,6 +252,7 @@
                         </goals>
                         <configuration>
                             <skip>true</skip>
+                            <!--suppress MavenModelInspection -->
                             <argLine>${surefire.argLine}</argLine>
                             <forkMode>once</forkMode>
                             <excludes>
@@ -265,11 +268,12 @@
                         </goals>
                         <configuration>
                           <skip>false</skip>
+                            <!--suppress MavenModelInspection -->
                           <argLine>${it.surefire.argLine}</argLine>
                           <forkMode>once</forkMode>
                           <includes>
                             <include>**/*IT.java</include>
-                          </includes>                                  
+                          </includes>
                         </configuration>
                     </execution>
                 </executions>
@@ -295,47 +299,12 @@
             <plugin>
                 <groupId>org.apache.openejb.maven</groupId>
                 <artifactId>tomee-maven-plugin</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <version>1.0.0</version>
                 <configuration>
                     <tomeeClassifier>jaxrs</tomeeClassifier>
                 </configuration>
             </plugin>
         </plugins>
-        <pluginManagement>
-        	<plugins>
-        		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-        		<plugin>
-        			<groupId>org.eclipse.m2e</groupId>
-        			<artifactId>lifecycle-mapping</artifactId>
-        			<version>1.0.0</version>
-        			<configuration>
-        				<lifecycleMappingMetadata>
-        					<pluginExecutions>
-        						<pluginExecution>
-        							<pluginExecutionFilter>
-        								<groupId>
-        									org.zeroturnaround
-        								</groupId>
-        								<artifactId>
-        									jrebel-maven-plugin
-        								</artifactId>
-        								<versionRange>
-        									[1.1.3,)
-        								</versionRange>
-        								<goals>
-        									<goal>generate</goal>
-        								</goals>
-        							</pluginExecutionFilter>
-        							<action>
-        								<ignore></ignore>
-        							</action>
-        						</pluginExecution>
-        					</pluginExecutions>
-        				</lifecycleMappingMetadata>
-        			</configuration>
-        		</plugin>
-        	</plugins>
-        </pluginManagement>
     </build>
 
     <repositories>
