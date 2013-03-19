@@ -32,8 +32,8 @@ public class CatalogController extends Controller implements Serializable {
     private CatalogService catalogService;
 
     private String categoryName;
-    private Long productId;
-    private Long itemId;
+    private String productId;
+    private String itemId;
 
     private String keyword;
     private Product product;
@@ -46,7 +46,7 @@ public class CatalogController extends Controller implements Serializable {
     // ======================================
 
     public String doFindProducts() {
-        products = catalogService.findProducts(categoryName);
+   		products = catalogService.findProducts(categoryName);
         return "showproducts.faces";
     }
 
@@ -57,7 +57,7 @@ public class CatalogController extends Controller implements Serializable {
     }
 
     public String doFindItem() {
-        item = catalogService.findItem(String.valueOf(itemId));
+        item = catalogService.findItem(itemId);
         return "showitem.faces";
     }
 
@@ -110,19 +110,19 @@ public class CatalogController extends Controller implements Serializable {
         this.categoryName = categoryName;
     }
 
-    public Long getProductId() {
+    public String getProductId() {
         return productId;
     }
 
-    public void setProductId(Long productId) {
+    public void setProductId(String productId) {
         this.productId = productId;
     }
 
-    public Long getItemId() {
+    public String getItemId() {
         return itemId;
     }
 
-    public void setItemId(Long itemId) {
+    public void setItemId(String itemId) {
         this.itemId = itemId;
     }
 }

@@ -19,10 +19,12 @@ import org.agoncal.application.petstore.domain.Product;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.agoncal.application.petstore.util.Loggable;
 import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.couchbase.client.CouchbaseClient;
+import com.couchbase.client.protocol.views.ComplexKey;
 import com.couchbase.client.protocol.views.Query;
 import com.couchbase.client.protocol.views.View;
 import com.couchbase.client.protocol.views.ViewResponse;
@@ -169,9 +171,24 @@ public class CatalogService implements Serializable {
         if (categoryName == null)
             throw new ValidationException("Invalid category name");
 
-        TypedQuery<Product> typedQuery = em.createNamedQuery(Product.FIND_BY_CATEGORY_NAME, Product.class);
-        typedQuery.setParameter("pname", categoryName);
-        return typedQuery.getResultList();
+        List<Product> products = null;
+
+    	Category category;
+		try {
+			category = mapper.readValue((String) client.get(categoryName), Category.class);
+			products = new ArrayList<Product>();
+	       	for (Product product : category.getProducts()) {
+	       		products.add(product);
+	       	}
+		} catch (JsonParseException e) {
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+    	return products;
     }
 
     public Product findProduct(String productId) {
@@ -261,20 +278,100 @@ public class CatalogService implements Serializable {
         removeProduct(findProduct(productId));
     }
 
-    public List<Item> findItems(Long productId) {
+    public List<Item> findItems(String productId) {
         if (productId == null)
             throw new ValidationException("Invalid product id");
 
-        TypedQuery<Item> typedQuery = em.createNamedQuery(Item.FIND_BY_PRODUCT_ID, Item.class);
-        typedQuery.setParameter("productId", productId);
-        return typedQuery.getResultList();
+        //TypedQuery<Item> typedQuery = em.createNamedQuery(Item.FIND_BY_PRODUCT_ID, Item.class);
+        //typedQuery.setParameter("productId", productId);
+        //return typedQuery.getResultList();
+        List<Item> items = null;
+
+    	View view = client.getView("categories", "products");
+
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setRangeStart(ComplexKey.of(productId));
+    	query.setRangeEnd(ComplexKey.of(productId + "\uefff"));
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	while(itr.hasNext()) {
+    		ViewRow row = itr.next();
+    		Category category = null;
+    		items = new ArrayList<Item>();
+	  		try {
+	  			String json = (String) row.getDocument();
+	  			category = mapper.readValue(json, Category.class);
+	  			for (Product product : category.getProducts()) {
+	  				if (product.getId().equals(productId)) {
+	  		  	       	for (Item item : product.getItems()) {
+	  		  	       		items.add(item);
+	  		  	       	}
+	  				}
+	  			}
+	  			
+	  		} catch (JsonParseException e) {
+	  			e.printStackTrace();
+	  		} catch (JsonMappingException e) {
+	  			e.printStackTrace();
+	  		} catch (IOException e) {
+	  			e.printStackTrace();
+	  		}
+    	}
+    	return items;
     }
 
     public Item findItem(final String itemId) {
+    	System.out.println("Item ID: " + itemId);
         if (itemId == null)
             throw new ValidationException("Invalid item id");
 
-        return mapper.convertValue(client.get(itemId), Item.class);
+    	View view = client.getView("categories", "items");
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setRangeStart(ComplexKey.of(itemId));
+    	query.setRangeEnd(ComplexKey.of(itemId + "\uefff"));
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	Item item = null;
+
+    	while(itr.hasNext()) {
+    		System.out.println("Iterator has something");
+    		ViewRow row = itr.next();
+    		Category category = null;
+	  		try {
+	  			String json = (String) row.getDocument();
+	  			category = mapper.readValue(json, Category.class);
+	  			System.out.println("Category: " + category.getName());
+	  			for (Product product : category.getProducts()) {
+  		  	       	for (Item tItem : product.getItems()) {
+	  		  	       	if (tItem.getId().equals(itemId)) {
+	  		  	       		item = tItem;
+	  		  	       	}
+  		  	       	}
+	  			}
+	  			
+	  		} catch (JsonParseException e) {
+	  			e.printStackTrace();
+	  		} catch (JsonMappingException e) {
+	  			e.printStackTrace();
+	  		} catch (IOException e) {
+	  			e.printStackTrace();
+	  		}
+    	}
+    	return item;
         //return em.find(Item.class, itemId);
     }
 
