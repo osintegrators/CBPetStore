@@ -4,16 +4,14 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-
-import net.spy.memcached.internal.OperationFuture;
 
 import org.agoncal.application.petstore.domain.CartItem;
 import org.agoncal.application.petstore.domain.CreditCard;
@@ -25,14 +23,12 @@ import org.agoncal.application.petstore.util.Loggable;
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import com.couchbase.client.CouchbaseClient;
 import com.couchbase.client.protocol.views.Query;
 import com.couchbase.client.protocol.views.View;
 import com.couchbase.client.protocol.views.ViewResponse;
 import com.couchbase.client.protocol.views.ViewRow;
-import com.fasterxml.jackson.core.JsonParser;
 
 /**
  * @author Antonio Goncalves
@@ -95,13 +91,17 @@ public class OrderService implements Serializable {
         List<OrderLine> orderLines = new ArrayList<OrderLine>();
 
         for (CartItem cartItem : cartItems) {
-            orderLines.add(new OrderLine(cartItem.getQuantity(), em.merge(cartItem.getItem())));
+        	Long currentItem = 1L;
+        	OrderLine orderLine = new OrderLine(cartItem.getQuantity(), cartItem.getItem());
+        	orderLine.setId(currentItem++);
+            orderLines.add(orderLine);
         }
         order.setOrderLines(orderLines);
 
         // Persists the object to the database
         //em.persist(order);
-        order.setId(customer.getFirstname());
+        order.setOrderDate(new Date());
+        order.setId(customer.getFirstname() + "-" + order.getOrderDate().getTime());
 
         try {
 			client.set(order.getId(), EXP_TIME, mapper.writeValueAsString(order));

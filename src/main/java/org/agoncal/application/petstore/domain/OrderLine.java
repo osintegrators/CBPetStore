@@ -25,7 +25,7 @@ public class OrderLine {
     // ======================================
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    //@GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @Column(nullable = false)
     private Integer quantity;
@@ -60,6 +60,10 @@ public class OrderLine {
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+    	this.id = id;
     }
 
     public Integer getQuantity() {

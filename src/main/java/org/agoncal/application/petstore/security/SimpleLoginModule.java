@@ -82,7 +82,6 @@ public class SimpleLoginModule implements LoginModule {
             if (customer == null) {
                 throw new LoginException("Authentication failed");
             }
-
             return true;
         } catch (Exception e) {
             e.printStackTrace();

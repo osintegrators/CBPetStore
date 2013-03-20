@@ -143,15 +143,15 @@ public class DBPopulator {
 
         // Items
         Item largeAngelfish = new Item("Large", 10.00f, "fish1.jpg", angelfish, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum velit ante, malesuada porta condimentum eget, tristique id magna. Donec ac justo velit. Suspendisse potenti. Donec vulputate vulputate molestie. Quisque vitae arcu massa, dictum sodales leo. Sed feugiat elit vitae ante auctor ultrices. Duis auctor consectetur arcu id faucibus. Curabitur gravida.");
-        largeAngelfish.setId(largeAngelfish.getType() + "_" + angelfish.getName() + "_" + largeAngelfish.getName());
+        largeAngelfish.setId(largeAngelfish.getName() + "_" + angelfish.getName() + "_" + largeAngelfish.getType());
         Item thootlessAngelfish = new Item("Thootless", 10.00f, "fish1.jpg", angelfish, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur fringilla pharetra dignissim. In imperdiet, lacus a vehicula dignissim, ante ligula euismod leo, non lobortis orci quam a nisl. Aliquam risus eros, molestie sit amet interdum nec, convallis malesuada leo. Quisque bibendum facilisis erat eget tincidunt. Phasellus pharetra gravida purus. Maecenas.");
-        thootlessAngelfish.setId(thootlessAngelfish.getType() + "_" + angelfish.getName() + "_" + thootlessAngelfish.getName());
+        thootlessAngelfish.setId(thootlessAngelfish.getName() + "_" + angelfish.getName() + "_" + thootlessAngelfish.getType());
         angelfish.addItem(largeAngelfish);
         angelfish.addItem(thootlessAngelfish);
         Item spottedTigerShark = new Item("Spotted", 12.00f, "fish4.jpg", tigerShark, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque dictum iaculis sapien, eu fermentum eros feugiat a. Pellentesque ultricies mauris orci. Mauris interdum hendrerit felis vel dignissim. Phasellus ac sem sit amet ante laoreet volutpat. Sed sagittis venenatis ullamcorper. Vivamus non mollis nunc. Etiam mauris odio, tristique sed porta in.");
-        spottedTigerShark.setId(spottedTigerShark.getType() + "_" + tigerShark.getName() + "_" + spottedTigerShark.getName());
+        spottedTigerShark.setId(spottedTigerShark.getName() + "_" + tigerShark.getName() + "_" + spottedTigerShark.getType());
         Item spotlessTigerShark = new Item("Spotless", 12.00f, "fish4.jpg", tigerShark, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In hendrerit ultricies bibendum. Vestibulum vitae dui porttitor nibh dignissim pretium eu at odio. Proin ac nibh eget erat ullamcorper consequat ac cursus est. Donec sollicitudin interdum elit sed gravida. Integer lacus lacus, gravida eget vehicula ac, sagittis et dui. In et.");
-        spotlessTigerShark.setId(spotlessTigerShark.getType() + "_" + tigerShark.getName() + "_" + spotlessTigerShark.getName());
+        spotlessTigerShark.setId(spotlessTigerShark.getName() + "_" + tigerShark.getName() + "_" + spotlessTigerShark.getType());
         tigerShark.addItem(spottedTigerShark);
         tigerShark.addItem(spotlessTigerShark);
         Item maleKoi = new Item("Male Adult", 12.00f, "fish3.jpg", koi, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi consectetur, ligula eu malesuada tempus, risus tellus varius ligula, id auctor magna tellus quis dui. Integer ut neque ut libero aliquet hendrerit. Maecenas bibendum, magna sed vulputate tempor, tortor neque consequat nunc, id consectetur neque odio eget augue. Ut consectetur, nisl.");
@@ -173,9 +173,6 @@ public class DBPopulator {
         femaleBulldog.setId(femaleBulldog.getType() + "_" + bulldog.getName() + "_" + femaleBulldog.getName());
         bulldog.addItem(maleBulldog);
         bulldog.addItem(femaleBulldog);
-        
-        
-        
         
         Item malePoodle = new Item("Spotted Male Puppy", 32.00f, "dog2.jpg", poodle, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis ipsum erat, tincidunt sit amet lacinia non, vestibulum elementum odio. Donec id lacus ante, id bibendum est. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Etiam eu suscipit mauris. Vivamus dolor diam, pulvinar a consectetur at.");
         malePoodle.setId(malePoodle.getType() + "_" + poodle.getName() + "_" + malePoodle.getName());

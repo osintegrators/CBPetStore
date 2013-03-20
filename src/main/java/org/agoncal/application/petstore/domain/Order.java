@@ -175,7 +175,7 @@ public class Order {
         this.creditCard = creditCard;
     }
 
-    public String getCreditCardNumber() {
+    /*public String getCreditCardNumber() {
         return creditCard.getCreditCardNumber();
     }
 
@@ -197,7 +197,7 @@ public class Order {
 
     public void setCreditCardExpiryDate(String creditCardExpiryDate) {
         creditCard.setCreditCardExpDate(creditCardExpiryDate);
-    }
+    }*/
 
     // ======================================
     // =   Methods hash, equals, toString   =

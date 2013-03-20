@@ -149,7 +149,19 @@ public class CatalogService implements Serializable {
         if (category == null)
             throw new ValidationException("Category object is null");
 
-        return em.merge(category);
+        try {
+			client.replace(category.getName(), EXP_TIME, mapper.writeValueAsString(category));
+		} catch (JsonGenerationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (JsonMappingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        return category;
     }
 
     public void removeCategory(Category category) {
@@ -157,7 +169,7 @@ public class CatalogService implements Serializable {
             throw new ValidationException("Category object is null");
 
         //em.remove(em.merge(category));
-        client.delete(category.getId());
+        client.delete(category.getName());
     }
 
     public void removeCategory(String categoryId) {
@@ -173,7 +185,7 @@ public class CatalogService implements Serializable {
 
         List<Product> products = null;
 
-    	Category category;
+    	Category category = null;
 		try {
 			category = mapper.readValue((String) client.get(categoryName), Category.class);
 			products = new ArrayList<Product>();
@@ -207,26 +219,16 @@ public class CatalogService implements Serializable {
         //TypedQuery<Product> typedQuery = em.createNamedQuery(Product.FIND_ALL, Product.class);
         //return typedQuery.getResultList();
 
-    	List<Product> products = new ArrayList<Product>();
+        List<Product> products = null;
 
-    	View view = client.getView("products", "all");
-
-    	// Create a new View Query
-    	Query query = new Query();
-    	query.setIncludeDocs(true); // Include the full document as well
-
-    	// Query the Cluster and return the View Response
-    	ViewResponse result = client.query(view, query);
-
-    	// Iterate over the results and print out some info
-    	Iterator<ViewRow> itr = result.iterator();
-
-    	while(itr.hasNext()) {
-    	  ViewRow row = itr.next();
-
-    	  Product product = mapper.convertValue(row.getDocument(), Product.class);
-    	  products.add(product);
+    	List<Category> categories = findAllCategories();
+    	for (Category category : categories) {
+			products = new ArrayList<Product>();
+	       	for (Product product : category.getProducts()) {
+	       		products.add(product);
+	       	}
     	}
+
     	return products;
     }
 
@@ -239,19 +241,10 @@ public class CatalogService implements Serializable {
 
         //em.persist(product);
 
+        Category category = product.getCategory();
         product.setId(product.getType() + "_" + product.getName());
-        try {
-			client.set(product.getName(), EXP_TIME, mapper.writeValueAsString(product));
-		} catch (JsonGenerationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (JsonMappingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+        category.addProduct(product);
+        updateCategory(category);
 
         return product;
     }
@@ -260,15 +253,32 @@ public class CatalogService implements Serializable {
         if (product == null)
             throw new ValidationException("Product object is null");
 
-        return em.merge(product);
+        Category category = product.getCategory();
+        List<Product> products = category.getProducts();
+        for (Product tProduct : products) {
+        	if (tProduct.getId().equals(product.getId())) {
+        		products.remove(tProduct);
+        		products.add(product);
+        	}
+        }
+        category.setProducts(products);
+        updateCategory(category);
+        return product;
     }
 
     public void removeProduct(Product product) {
         if (product == null)
             throw new ValidationException("Product object is null");
 
-        //em.remove(em.merge(product));
-        client.delete(product.getId());
+        Category category = product.getCategory();
+        List<Product> products = category.getProducts();
+        for (Product tProduct : products) {
+        	if (tProduct.getId().equals(product.getId())) {
+        		products.remove(tProduct);
+        
+        	}
+        }
+        updateCategory(category);
     }
 
     public void removeProduct(String productId) {
@@ -348,13 +358,11 @@ public class CatalogService implements Serializable {
     	Item item = null;
 
     	while(itr.hasNext()) {
-    		System.out.println("Iterator has something");
     		ViewRow row = itr.next();
     		Category category = null;
 	  		try {
 	  			String json = (String) row.getDocument();
 	  			category = mapper.readValue(json, Category.class);
-	  			System.out.println("Category: " + category.getName());
 	  			for (Product product : category.getProducts()) {
   		  	       	for (Item tItem : product.getItems()) {
 	  		  	       	if (tItem.getId().equals(itemId)) {
@@ -379,33 +387,97 @@ public class CatalogService implements Serializable {
         if (keyword == null)
             keyword = "";
 
-        TypedQuery<Item> typedQuery = em.createNamedQuery(Item.SEARCH, Item.class);
-        typedQuery.setParameter("keyword", "%" + keyword.toUpperCase() + "%");
-        return typedQuery.getResultList();
+        //TypedQuery<Item> typedQuery = em.createNamedQuery(Item.SEARCH, Item.class);
+        //typedQuery.setParameter("keyword", "%" + keyword.toUpperCase() + "%");
+        //return typedQuery.getResultList();
+    	List<Item> items = new ArrayList<Item>();
+        
+        View view = client.getView("categories", "items");
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setRangeStart(ComplexKey.of(keyword));
+    	query.setRangeEnd(ComplexKey.of(keyword + "\uefff"));
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = null;
+    	try {
+    		result = client.query(view, query);
+    	} catch (Exception ex) {
+    		System.out.println("Exception: " + ex.getMessage());
+    	}
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	while(itr.hasNext()) {
+    		System.out.println("Iterator has something");
+    		ViewRow row = itr.next();
+    		Category category = null;
+	  		try {
+	  			String json = (String) row.getDocument();
+	  			category = mapper.readValue(json, Category.class);
+	  			System.out.println("Category: " + category.getName());
+	  			for (Product product : category.getProducts()) {
+  		  	       	for (Item item : product.getItems()) {
+  		  	       		//System.out.println("Keyword: " + keyword + " Id: " + item.getId() + " Name: " + item.getName());
+	  		  	       	if (item.getId().contains(keyword) || item.getName().contains(keyword)) {
+	  		  	       		items.add(item);
+	  		  	       	}
+  		  	       	}
+	  			}
+	  			
+	  		} catch (JsonParseException e) {
+	  			e.printStackTrace();
+	  		} catch (JsonMappingException e) {
+	  			e.printStackTrace();
+	  		} catch (IOException e) {
+	  			e.printStackTrace();
+	  		}
+    	}
+    	return items;
     }
 
     public List<Item> findAllItems() {
         //TypedQuery<Item> typedQuery = em.createNamedQuery(Item.FIND_ALL, Item.class);
         //return typedQuery.getResultList();
     	List<Item> items = new ArrayList<Item>();
-
-    	View view = client.getView("items", "all");
-
+        
+        View view = client.getView("categories", "items");
     	// Create a new View Query
     	Query query = new Query();
     	query.setIncludeDocs(true); // Include the full document as well
 
     	// Query the Cluster and return the View Response
-    	ViewResponse result = client.query(view, query);
+    	ViewResponse result = null;
+    	try {
+    		result = client.query(view, query);
+    	} catch (Exception ex) {
+    		System.out.println("Exception: " + ex.getMessage());
+    	}
 
     	// Iterate over the results and print out some info
     	Iterator<ViewRow> itr = result.iterator();
 
     	while(itr.hasNext()) {
-    	  ViewRow row = itr.next();
-
-    	  Item item = mapper.convertValue(row.getDocument(), Item.class);
-    	  items.add(item);
+    		ViewRow row = itr.next();
+    		Category category = null;
+	  		try {
+	  			String json = (String) row.getDocument();
+	  			category = mapper.readValue(json, Category.class);
+	  			for (Product product : category.getProducts()) {
+  		  	       	for (Item item : product.getItems()) {
+  		  	       		items.add(item);
+  		  	       	}
+	  			}
+	  			
+	  		} catch (JsonParseException e) {
+	  			e.printStackTrace();
+	  		} catch (JsonMappingException e) {
+	  			e.printStackTrace();
+	  		} catch (IOException e) {
+	  			e.printStackTrace();
+	  		}
     	}
     	return items;
     }
@@ -422,19 +494,10 @@ public class CatalogService implements Serializable {
 
         //em.persist(item);
 
-        item.setId(item.getType() + "_" + item.getName());
-        try {
-			client.set(item.getName(), EXP_TIME, mapper.writeValueAsString(item));
-		} catch (JsonGenerationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (JsonMappingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+        Product product = item.getProduct();
+        item.setId(product.getType() + "_" + product.getName());
+        product.addItem(item);
+        updateProduct(product);
 
         return item;
     }
@@ -443,15 +506,33 @@ public class CatalogService implements Serializable {
         if (item == null)
             throw new ValidationException("Item object is null");
 
-        return em.merge(item);
+        //return em.merge(item);
+        Product product = item.getProduct();
+        List<Item> items = product.getItems();
+        for (Item tItem : items) {
+        	if (tItem.getId().equals(item.getId())) {
+        		items.remove(tItem);
+        		items.add(item);
+        	}
+        }
+        product.setItems(items);
+        updateProduct(product);
+        return item;
     }
 
     public void removeItem(Item item) {
         if (item == null)
             throw new ValidationException("Item object is null");
 
-        client.delete(item.getId());
-        //em.remove(em.merge(item));
+        Product product = item.getProduct();
+        List<Item> items = product.getItems();
+        for (Item tItem : items) {
+        	if (tItem.getId().equals(item.getId())) {
+        		items.remove(tItem);
+        	}
+        }
+        product.setItems(items);
+        updateProduct(product);
     }
 
     public void removeItem(String itemId) {

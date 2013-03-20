@@ -49,8 +49,9 @@ public class Customer implements Serializable {
     // ======================================
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    //@GeneratedValue(strategy = GenerationType.AUTO)
+    private String id;
+    private String type = "customer";
     @Column(unique = true, nullable = false, length = 10)
     @Login
     private String login;
@@ -71,7 +72,6 @@ public class Customer implements Serializable {
     private String email;
     @Embedded
     @Valid
-    @JsonManagedReference
     private Address homeAddress = new Address();
     @Column(name = "date_of_birth")
     @Temporal(TemporalType.DATE)
@@ -155,11 +155,23 @@ public class Customer implements Serializable {
     // =         Getters & setters          =
     // ======================================
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public String getLogin() {
+    public void setId(String id) {
+    	this.id = id;
+    }
+
+    public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getLogin() {
         return login;
     }
 
