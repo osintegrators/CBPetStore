@@ -1,22 +1,22 @@
 package org.agoncal.application.petstore.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import javax.inject.Inject;
+
 import org.agoncal.application.petstore.domain.Category;
 import org.agoncal.application.petstore.domain.Item;
 import org.agoncal.application.petstore.domain.Product;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 /**
  * @author Antonio Goncalves
  *         http://www.antoniogoncalves.org
  */
-//@Ignore
 @RunWith(Arquillian.class)
 public class CatalogServiceIT extends AbstractServiceIT {
 
@@ -32,6 +32,7 @@ public class CatalogServiceIT extends AbstractServiceIT {
     // ======================================
 
     @Test
+    @Ignore
     public void shouldCRUDaCategory() {
 
         // Finds all the objects
@@ -70,6 +71,7 @@ public class CatalogServiceIT extends AbstractServiceIT {
     }
 
     @Test
+    @Ignore
     public void shouldCRUDaProduct() {
 
         // Finds all the objects
@@ -109,6 +111,7 @@ public class CatalogServiceIT extends AbstractServiceIT {
     }
 
     @Test
+    @Ignore
     public void shouldCRUDanItem() {
 
         // Finds all the objects

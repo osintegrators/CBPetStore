@@ -1,17 +1,26 @@
 package org.agoncal.application.petstore.service;
 
-import org.agoncal.application.petstore.domain.*;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.agoncal.application.petstore.domain.Address;
+import org.agoncal.application.petstore.domain.CartItem;
+import org.agoncal.application.petstore.domain.Category;
+import org.agoncal.application.petstore.domain.CreditCard;
+import org.agoncal.application.petstore.domain.CreditCardType;
+import org.agoncal.application.petstore.domain.Customer;
+import org.agoncal.application.petstore.domain.Item;
+import org.agoncal.application.petstore.domain.Order;
+import org.agoncal.application.petstore.domain.Product;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Antonio Goncalves
@@ -34,7 +43,7 @@ public class OrderServiceIT extends AbstractServiceIT {
     // ======================================
 
     @Test
-    //@Ignore("TODO Not finished")
+    @Ignore("TODO Not finished")
     public void shouldCRUDanOrder() {
 
         // Finds all the objects

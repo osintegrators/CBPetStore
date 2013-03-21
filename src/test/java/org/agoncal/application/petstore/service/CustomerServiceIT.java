@@ -1,15 +1,16 @@
 package org.agoncal.application.petstore.service;
 
-import org.agoncal.application.petstore.domain.Address;
-import org.agoncal.application.petstore.domain.Customer;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import javax.inject.Inject;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.agoncal.application.petstore.domain.Address;
+import org.agoncal.application.petstore.domain.Customer;
+import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * @author Antonio Goncalves
@@ -30,6 +31,7 @@ public class CustomerServiceIT extends AbstractServiceIT {
     // ======================================
 
     @Test
+    @Ignore
     public void shouldCRUDaCustomer() {
 
         // Finds all the objects

@@ -2,16 +2,13 @@ package org.agoncal.application.petstore.service;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 
 import org.agoncal.application.petstore.domain.Category;
 import org.agoncal.application.petstore.domain.Item;
@@ -44,8 +41,8 @@ public class CatalogService implements Serializable {
     // =             Attributes             =
     // ======================================
 
-    @Inject
-    private EntityManager em;
+    //@Inject
+    //private EntityManager em;
 
     public static CouchbaseClient client = null;
     public static ObjectMapper mapper = null;
@@ -56,26 +53,8 @@ public class CatalogService implements Serializable {
     // ======================================
 
     public CatalogService() {
-        // Set the URIs and get a client
-        List<URI> uris = new LinkedList<URI>();
-
-        // Connect to localhost or to the appropriate URI(s)
-        uris.add(URI.create("http://localhost:8091/pools"));
-
-        
-        try {
-          // Use the "default" bucket with no password
-          client = new CouchbaseClient(uris, "petstore", "");
-        } catch (IOException e) {
-          System.err.println("IOException connecting to Couchbase: " + e.getMessage());
-        }
-
-        mapper = new ObjectMapper();
-    }
-
-    @Override
-    public void finalize() {
-    	client.shutdown();
+    	client = DBPopulator.getClient();
+    	mapper = DBPopulator.getMapper();
     }
 
     /*public Category findCategory(Long categoryId) {
@@ -92,7 +71,20 @@ public class CatalogService implements Serializable {
         //TypedQuery<Category> typedQuery = em.createNamedQuery(Category.FIND_BY_NAME, Category.class);
         //typedQuery.setParameter("pname", categoryName);
         //return typedQuery.getSingleResult();
-        return mapper.convertValue(client.get(categoryName), Category.class);
+        Category category = null;
+		try {
+			category = mapper.readValue((String) client.get(categoryName), Category.class);
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return category;
     }
 
     public List<Category> findAllCategories() {
@@ -116,7 +108,16 @@ public class CatalogService implements Serializable {
     	while(itr.hasNext()) {
     	  ViewRow row = itr.next();
 
-    	  Category category = mapper.convertValue(row.getDocument(), Category.class);
+    	  Category category = null;
+    	  try {
+    		  category = mapper.readValue((String) row.getDocument(), Category.class);
+    	  } catch (JsonParseException e) {
+    		  e.printStackTrace();
+    	  } catch (JsonMappingException e) {
+    		  e.printStackTrace();
+    	  } catch (IOException e) {
+    		  e.printStackTrace();
+    	  }
     	  categories.add(category);
     	}
     	return categories;
@@ -212,7 +213,42 @@ public class CatalogService implements Serializable {
         //    product.getItems(); // TODO check lazy loading
         //}
         //return product;
-        return mapper.convertValue(client.get(productId), Product.class);
+    	View view = client.getView("categories", "products");
+    	// Create a new View Query
+    	Query query = new Query();
+    	query.setRangeStart(ComplexKey.of(productId));
+    	query.setRangeEnd(ComplexKey.of(productId + "\uefff"));
+    	query.setIncludeDocs(true); // Include the full document as well
+
+    	// Query the Cluster and return the View Response
+    	ViewResponse result = client.query(view, query);
+
+    	// Iterate over the results and print out some info
+    	Iterator<ViewRow> itr = result.iterator();
+
+    	Product product = null;
+
+    	while(itr.hasNext()) {
+    		ViewRow row = itr.next();
+    		Category category = null;
+	  		try {
+	  			String json = (String) row.getDocument();
+	  			category = mapper.readValue(json, Category.class);
+	  			for (Product tProduct : category.getProducts()) {
+  		  	       	if (tProduct.getId().equals(productId)) {
+	  		  	       	product = tProduct;
+  		  	       	}
+	  			}
+	  			
+	  		} catch (JsonParseException e) {
+	  			e.printStackTrace();
+	  		} catch (JsonMappingException e) {
+	  			e.printStackTrace();
+	  		} catch (IOException e) {
+	  			e.printStackTrace();
+	  		}
+    	}
+    	return product;
     }
 
     public List<Product> findAllProducts() {
@@ -338,7 +374,6 @@ public class CatalogService implements Serializable {
     }
 
     public Item findItem(final String itemId) {
-    	System.out.println("Item ID: " + itemId);
         if (itemId == null)
             throw new ValidationException("Invalid item id");
 

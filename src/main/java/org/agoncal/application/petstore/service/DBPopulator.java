@@ -1,7 +1,9 @@
 package org.agoncal.application.petstore.service;
 
-import org.agoncal.application.petstore.domain.*;
-import org.agoncal.application.petstore.util.Loggable;
+import java.io.IOException;
+import java.net.URI;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -9,6 +11,16 @@ import javax.annotation.sql.DataSourceDefinition;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
+
+import org.agoncal.application.petstore.domain.Address;
+import org.agoncal.application.petstore.domain.Category;
+import org.agoncal.application.petstore.domain.Customer;
+import org.agoncal.application.petstore.domain.Item;
+import org.agoncal.application.petstore.domain.Product;
+import org.agoncal.application.petstore.util.Loggable;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.couchbase.client.CouchbaseClient;
 
 /**
  * @author Antonio Goncalves
@@ -19,14 +31,14 @@ import javax.inject.Inject;
 @Singleton
 @Startup
 @Loggable
-@DataSourceDefinition(
+/*@DataSourceDefinition(
         className = "org.apache.derby.jdbc.EmbeddedDataSource",
         name = "java:global/jdbc/applicationPetstoreDS",
         user = "app",
         password = "app",
         databaseName = "applicationPetstoreDB",
         properties = {"connectionAttributes=;create=true"}
-)
+)*/
 public class DBPopulator {
 
     // ======================================
@@ -50,12 +62,44 @@ public class DBPopulator {
     @Inject
     private CustomerService customerService;
 
+    public static CouchbaseClient client = null;
+    public static ObjectMapper mapper = null;
+
+    // ======================================
+    // =          Public Methods            = 
+    // ======================================
+    public static CouchbaseClient getClient() {
+    	return client;
+    }
+
+    public static ObjectMapper getMapper() {
+    	return mapper;
+    }
+
     // ======================================
     // =          Lifecycle Methods         =
     // ======================================
 
     @PostConstruct
     private void populateDB() {
+    	/** Couchbase Client Setup **/
+        // Set the URIs and get a client
+        List<URI> uris = new LinkedList<URI>();
+
+        // Connect to localhost or to the appropriate URI(s)
+        uris.add(URI.create("http://localhost:8091/pools"));
+
+        
+        try {
+          // Use the "petstore" bucket with no password
+          client = new CouchbaseClient(uris, "petstore", "");
+        } catch (IOException e) {
+          System.err.println("IOException connecting to Couchbase: " + e.getMessage());
+        }
+
+        mapper = new ObjectMapper();
+
+        /** Build Database **/
         initCatalog();
         initCustomers();
     }
@@ -72,6 +116,9 @@ public class DBPopulator {
         customerService.removeCustomer(steve);
         customerService.removeCustomer(user);
         customerService.removeCustomer(admin);
+
+        /** Shutdown Couchbase Client **/
+        client.shutdown();
     }
 
     // ======================================

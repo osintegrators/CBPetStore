@@ -21,6 +21,7 @@ import org.agoncal.application.petstore.domain.OrderLine;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.agoncal.application.petstore.util.Loggable;
 import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -44,8 +45,8 @@ public class OrderService implements Serializable {
     // =             Attributes             =
     // ======================================
 
-    @Inject
-    private EntityManager em;
+    //@Inject
+    //private EntityManager em;
 
     public static CouchbaseClient client = null;
     public static ObjectMapper mapper = null;
@@ -56,26 +57,8 @@ public class OrderService implements Serializable {
     // ======================================
 
     public OrderService() {
-        // Set the URIs and get a client
-        List<URI> uris = new LinkedList<URI>();
-
-        // Connect to localhost or to the appropriate URI(s)
-        uris.add(URI.create("http://localhost:8091/pools"));
-
-        
-        try {
-          // Use the "default" bucket with no password
-          client = new CouchbaseClient(uris, "petstore", "");
-        } catch (IOException e) {
-          System.err.println("IOException connecting to Couchbase: " + e.getMessage());
-        }
-
-        mapper = new ObjectMapper();
-    }
-
-    @Override
-    public void finalize() {
-    	client.shutdown();
+    	client = DBPopulator.getClient();
+    	mapper = DBPopulator.getMapper();
     }
 
     public Order createOrder(final Customer customer, final CreditCard creditCard, final List<CartItem> cartItems) {
@@ -124,7 +107,20 @@ public class OrderService implements Serializable {
             throw new ValidationException("Invalid order id");
 
         //return em.find(Order.class, orderId);
-        return mapper.convertValue(client.get(orderId), Order.class);
+        Order order = null;
+        try {
+			order = mapper.readValue((String) client.get(orderId), Order.class);
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return order;
     }
 
     public List<Order> findAllOrders() {
@@ -148,8 +144,19 @@ public class OrderService implements Serializable {
     	while(itr.hasNext()) {
     	  ViewRow row = itr.next();
 
-    	  Order order = mapper.convertValue(row.getDocument(), Order.class);
-    	  orders.add(order);
+    	  Order order = null;
+    	  try {
+    		  order = mapper.readValue((String) row.getDocument(), Order.class);
+    	  } catch (JsonParseException e) {
+    		  e.printStackTrace();
+    	  } catch (JsonMappingException e) {
+    		  e.printStackTrace();
+    	  } catch (IOException e) {
+    		  e.printStackTrace();
+    	  }
+    	  if (order != null) {
+    		  orders.add(order);
+    	  }
     	}
 
     	return orders;

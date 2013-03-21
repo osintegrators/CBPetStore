@@ -12,7 +12,7 @@
     <container qualifier="glassfish-embedded" default="true">
     </container>
 
-	<container qualifier="jboss">
+	<container qualifier="jboss" default="false">
 		<configuration>
 			<property name="jbossHome">/opt/jboss</property>
 		</configuration>

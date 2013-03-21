@@ -43,8 +43,8 @@ public class CustomerService implements Serializable {
     // =             Attributes             =
     // ======================================
 
-    @Inject
-    private EntityManager em;
+    //@Inject
+    //private EntityManager em;
 
     public static CouchbaseClient client = null;
     public static ObjectMapper mapper = null;
@@ -55,26 +55,8 @@ public class CustomerService implements Serializable {
     // ======================================
 
     public CustomerService() {
-        // Set the URIs and get a client
-        List<URI> uris = new LinkedList<URI>();
-
-        // Connect to localhost or to the appropriate URI(s)
-        uris.add(URI.create("http://localhost:8091/pools"));
-
-        
-        try {
-          // Use the "default" bucket with no password
-          client = new CouchbaseClient(uris, "petstore", "");
-        } catch (IOException e) {
-          System.err.println("IOException connecting to Couchbase: " + e.getMessage());
-        }
-
-        mapper = new ObjectMapper();
-    }
-
-    @Override
-    public void finalize() {
-    	client.shutdown();
+    	client = DBPopulator.getClient();
+    	mapper = DBPopulator.getMapper();
     }
 
     public boolean doesLoginAlreadyExist(final String login) {
@@ -196,8 +178,19 @@ public class CustomerService implements Serializable {
     	while(itr.hasNext()) {
     	  ViewRow row = itr.next();
 
-    	  Customer customer = mapper.convertValue(row.getDocument(), Customer.class);
-    	  customers.add(customer);
+    	  Customer customer = null;
+    	  try {
+			customer = mapper.readValue((String) row.getDocument(), Customer.class);
+			} catch (JsonParseException e) {
+				e.printStackTrace();
+			} catch (JsonMappingException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	  if (customer != null) {
+    		  customers.add(customer);
+    	  }
     	}
     	return customers;
     }

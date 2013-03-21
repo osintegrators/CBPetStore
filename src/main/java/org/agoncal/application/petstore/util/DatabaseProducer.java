@@ -16,7 +16,7 @@ public class DatabaseProducer {
     // =             Attributes             =
     // ======================================
 
-    @Produces
-    @PersistenceContext(unitName = "applicationPetstorePU")
-    private EntityManager em;
+    //@Produces
+    //@PersistenceContext(unitName = "applicationPetstorePU")
+    //private EntityManager em;
 }
