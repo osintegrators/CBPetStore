@@ -82,7 +82,11 @@
 			<artifactId>jackson-core</artifactId>
 			<version>2.1.4</version>
 		</dependency>
-
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+			<version>1.9.12</version>
+		</dependency>
     </dependencies>
 
     <profiles>

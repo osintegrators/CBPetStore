@@ -97,6 +97,7 @@ public class DBPopulator {
           System.err.println("IOException connecting to Couchbase: " + e.getMessage());
         }
 
+        /** Create Mapper For Json **/
         mapper = new ObjectMapper();
 
         /** Build Database **/

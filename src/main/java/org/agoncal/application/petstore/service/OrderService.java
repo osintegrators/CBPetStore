@@ -1,17 +1,12 @@
 package org.agoncal.application.petstore.service;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
 
 import org.agoncal.application.petstore.domain.CartItem;
 import org.agoncal.application.petstore.domain.CreditCard;
@@ -20,9 +15,6 @@ import org.agoncal.application.petstore.domain.Order;
 import org.agoncal.application.petstore.domain.OrderLine;
 import org.agoncal.application.petstore.exception.ValidationException;
 import org.agoncal.application.petstore.util.Loggable;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.couchbase.client.CouchbaseClient;
@@ -45,11 +37,14 @@ public class OrderService implements Serializable {
     // =             Attributes             =
     // ======================================
 
-    //@Inject
-    //private EntityManager em;
-
-    public static CouchbaseClient client = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public static CouchbaseClient client = null;
     public static ObjectMapper mapper = null;
+    
+    // Setting the expire time to 0 means never expire
     public static final int EXP_TIME = 0;
     
     // ======================================
@@ -57,10 +52,16 @@ public class OrderService implements Serializable {
     // ======================================
 
     public OrderService() {
+    	/** Get Couchbase client and Json mapper **/
     	client = DBPopulator.getClient();
     	mapper = DBPopulator.getMapper();
     }
 
+    /** Write order to the database using the login name as the key
+     *	and using mapper to convert the customer object to json. The
+     *	id will be the firstname of the customer with the epoch time
+     *	in milliseconds 
+     **/
     public Order createOrder(final Customer customer, final CreditCard creditCard, final List<CartItem> cartItems) {
 
         // OMake sure the object is valid
@@ -81,54 +82,43 @@ public class OrderService implements Serializable {
         }
         order.setOrderLines(orderLines);
 
-        // Persists the object to the database
-        //em.persist(order);
         order.setOrderDate(new Date());
         order.setId(customer.getFirstname() + "-" + order.getOrderDate().getTime());
 
+        // Persists the object to the database
         try {
 			client.set(order.getId(), EXP_TIME, mapper.writeValueAsString(order));
-		} catch (JsonGenerationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (JsonMappingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
-
         return order;
     }
 
+    /**
+     * Try to get a customer from the database using the key which is the order
+     * id. This will also map it back into object form using mapper.readValue
+     */
     public Order findOrder(String orderId) {
         if (orderId == null)
             throw new ValidationException("Invalid order id");
 
-        //return em.find(Order.class, orderId);
         Order order = null;
         try {
 			order = mapper.readValue((String) client.get(orderId), Order.class);
-		} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
         return order;
     }
 
+    /**
+     * Returns all of the orders in the database.
+     */
     public List<Order> findAllOrders() {
-        //TypedQuery<Order> typedQuery = em.createNamedQuery(Order.FIND_ALL, Order.class);
-        //return typedQuery.getResultList();
 
     	List<Order> orders = new ArrayList<Order>();
 
+    	// Gets a reference to the all orders view
     	View view = client.getView("orders", "all");
 
     	// Create a new View Query
@@ -138,7 +128,7 @@ public class OrderService implements Serializable {
     	// Query the Cluster and return the View Response
     	ViewResponse result = client.query(view, query);
 
-    	// Iterate over the results and print out some info
+    	// Iterate over the results and add all the orders to the order List
     	Iterator<ViewRow> itr = result.iterator();
 
     	while(itr.hasNext()) {
@@ -147,12 +137,8 @@ public class OrderService implements Serializable {
     	  Order order = null;
     	  try {
     		  order = mapper.readValue((String) row.getDocument(), Order.class);
-    	  } catch (JsonParseException e) {
-    		  e.printStackTrace();
-    	  } catch (JsonMappingException e) {
-    		  e.printStackTrace();
-    	  } catch (IOException e) {
-    		  e.printStackTrace();
+    	  } catch (Exception ex) {
+    		  ex.printStackTrace();
     	  }
     	  if (order != null) {
     		  orders.add(order);
@@ -162,11 +148,13 @@ public class OrderService implements Serializable {
     	return orders;
     }
 
+    /**
+     * Removes a customer from the database using the delete function
+     */
     public void removeOrder(Order order) {
         if (order == null)
             throw new ValidationException("Order object is null");
 
-        //em.remove(em.merge(order));
         client.delete(order.getId());
     }
 }
