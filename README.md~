@@ -114,6 +114,10 @@ Some people who worked on this project :
 
 * [If you can't deploy with Intellij IDEA`and JDK 7 on JBoss](http://youtrack.jetbrains.com/issue/IDEA-826) : `-Djava.nio.channels.spi.SelectorProvider=sun.nio.ch.KQueueSelectorProvider
 
+## Couchbase setup
+cbbackup http://host:8091 /backupdir -u Administrator -p password -b petstore
+cbrestore ./couchbasedb http://host:8091 -u Administrator -p password --bucket-source=petstore (--bucket-destination=petstore_new)
+
 ## Licensing
 
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-ShareAlike 3.0 Unported License</a>.
