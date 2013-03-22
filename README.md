@@ -1,4 +1,4 @@
-# Application - Petstore Java EE 6
+# Application - Petstore Java EE 6 (Couchbase)
 
 ## Summary
 
