@@ -408,7 +408,7 @@ public class CatalogService implements Serializable {
 
     	List<Item> items = new ArrayList<Item>();
         
-        View view = client.getView("categories", "items");
+        View view = client.getView("categories", "itemByName");
     	// Create a new View Query
     	Query query = new Query();
     	query.setRangeStart(ComplexKey.of(keyword));
